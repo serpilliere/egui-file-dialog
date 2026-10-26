@@ -2050,18 +2050,22 @@ impl FileDialog {
 
             match &self.mode {
                 DialogMode::PickDirectory | DialogMode::PickFile | DialogMode::PickMultiple => {
-                    use egui::containers::scroll_area::ScrollBarVisibility;
-
+                    // A truncated label rather than a scroll area: a scroll area
+                    // puts its content on whole pixels, which changes the height
+                    // of the bottom panel with its position, and the panel
+                    // shakes up and down at some pixels per point.
                     let text = self.get_selection_preview_text();
+                    let color = ui.style().visuals.selection.bg_fill;
 
-                    egui::containers::ScrollArea::horizontal()
-                        .auto_shrink([false, false])
-                        .max_width(scroll_bar_width)
-                        .stick_to_right(true)
-                        .scroll_bar_visibility(ScrollBarVisibility::AlwaysHidden)
-                        .show(ui, |ui| {
-                            ui.colored_label(ui.style().visuals.selection.bg_fill, text);
-                        });
+                    ui.allocate_ui_with_layout(
+                        egui::vec2(scroll_bar_width, ui.spacing().interact_size.y),
+                        egui::Layout::left_to_right(egui::Align::Center),
+                        |ui| {
+                            ui.add(
+                                egui::Label::new(egui::RichText::new(text).color(color)).truncate(),
+                            );
+                        },
+                    );
                 }
                 DialogMode::SaveFile => {
                     let mut output = egui::TextEdit::singleline(&mut self.file_name_input)
